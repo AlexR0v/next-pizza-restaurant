@@ -4,6 +4,7 @@ import Image                                                           from 'nex
 import { useRouter }                                                   from 'next/router.js'
 import { useEffect, useState }                                         from 'react'
 import { useDispatch, useSelector }                                    from 'react-redux'
+import OrderDetail                                                     from '../components/OrderDetail.jsx'
 import { cartSelector, resetCart }                                     from '../redux/cartSlice.js'
 import styles                                                          from '../styles/Cart.module.css'
 
@@ -22,8 +23,7 @@ const Cart = ({ payapalId }) => {
     try {
       const res = await axios.post('http://localhost:3336/api/orders', data)
       if (res.status === 201) {
-        dispatch(resetCart())
-        debugger
+        await dispatch(resetCart())
         router.push(`/orders/${res.data.order._id}`)
       }
     } catch (err) {
@@ -153,7 +153,11 @@ const Cart = ({ payapalId }) => {
           {open
             ? (
               <div className={styles.paymentMethod}>
-                <button className={styles.payButton}>CASH ON DELIVERY</button>
+                <button
+                  className={styles.payButton}
+                  onClick={() => setCash(true)}
+                >CASH ON DELIVERY
+                </button>
                 <PayPalScriptProvider
                   options={{
                     'client-id': payapalId,
@@ -176,6 +180,12 @@ const Cart = ({ payapalId }) => {
               >CHECKOUT NOW!</button>
             )}
         </div>
+        {cash && (
+          <OrderDetail
+            total={cart.total}
+            createOrder={createOrder}
+          />
+        )}
       </div>
     </div>
   )

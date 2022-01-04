@@ -58,6 +58,9 @@ const Product = ({ pizza }) => {
         <div className={styles.sizes}>
           <div
             className={styles.size}
+            style={{
+              border: size === 0 ? '1px solid black' : 'none'
+            }}
             onClick={() => handleSize(0)}
           >
             <Image
@@ -69,6 +72,9 @@ const Product = ({ pizza }) => {
           </div>
           <div
             className={styles.size}
+            style={{
+              border: size === 1 ? '1px solid black' : 'none'
+            }}
             onClick={() => handleSize(1)}
           >
             <Image
@@ -80,6 +86,9 @@ const Product = ({ pizza }) => {
           </div>
           <div
             className={styles.size}
+            style={{
+              border: size === 2 ? '1px solid black' : 'none'
+            }}
             onClick={() => handleSize(2)}
           >
             <Image

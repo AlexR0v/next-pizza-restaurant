@@ -42,6 +42,10 @@
   cursor: pointer;
 }
 
+.size_active {
+  border: 1px solid black;
+}
+
 .size:nth-child(2) {
   width: 40px;
   height: 40px;
