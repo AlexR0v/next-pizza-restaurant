@@ -1,12 +1,13 @@
 import { PayPalButtons, PayPalScriptProvider, usePayPalScriptReducer } from '@paypal/react-paypal-js'
+import axios                                                           from 'axios'
 import Image                                                           from 'next/image'
 import { useRouter }                                                   from 'next/router.js'
 import { useEffect, useState }                                         from 'react'
 import { useDispatch, useSelector }                                    from 'react-redux'
-import { cartSelector }                                                from '../redux/cartSlice.js'
+import { cartSelector, resetCart }                                     from '../redux/cartSlice.js'
 import styles                                                          from '../styles/Cart.module.css'
 
-const Cart = () => {
+const Cart = ({ payapalId }) => {
 
   const cart = useSelector(cartSelector)
   const [open, setOpen] = useState(false)
@@ -16,6 +17,19 @@ const Cart = () => {
   const style = { layout: 'vertical' }
   const dispatch = useDispatch()
   const router = useRouter()
+
+  const createOrder = async (data) => {
+    try {
+      const res = await axios.post('http://localhost:3336/api/orders', data)
+      if (res.status === 201) {
+        dispatch(resetCart())
+        debugger
+        router.push(`/orders/${res.data.order._id}`)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
 
   const ButtonWrapper = ({ currency, showSpinner }) => {
     const [{ options, isPending }, dispatch] = usePayPalScriptReducer()
@@ -55,8 +69,14 @@ const Cart = () => {
               })
           }}
           onApprove={function (data, actions) {
-            return actions.order.capture().then(function () {
-              // Your code here after capture the order
+            return actions.order.capture().then(function (details) {
+              const shipping = details.purchase_units[0].shipping
+              createOrder({
+                customer: shipping.name.full_name,
+                address: shipping.address.address_line_1,
+                total: cart.total,
+                method: 1
+              })
             })
           }}
         />
@@ -130,24 +150,43 @@ const Cart = () => {
           <div className={styles.totalText}>
             <b className={styles.totalTextTitle}>Total:</b>${cart.total}
           </div>
-          <button className={styles.button}>CHECKOUT NOW!</button>
-          <PayPalScriptProvider
-            options={{
-              'client-id': 'test',
-              components: 'buttons',
-              currency: 'RUB',
-              'disable-funding': 'credit,card,p24'
-            }}
-          >
-            <ButtonWrapper
-              currency={currency}
-              showLoader={false}
-            />
-          </PayPalScriptProvider>
+          {open
+            ? (
+              <div className={styles.paymentMethod}>
+                <button className={styles.payButton}>CASH ON DELIVERY</button>
+                <PayPalScriptProvider
+                  options={{
+                    'client-id': payapalId,
+                    components: 'buttons',
+                    currency: currency,
+                    'disable-funding': 'credit,card,p24'
+                  }}
+                >
+                  <ButtonWrapper
+                    currency={currency}
+                    showLoader={false}
+                  />
+                </PayPalScriptProvider>
+              </div>
+            )
+            : (
+              <button
+                onClick={() => setOpen(true)}
+                className={styles.button}
+              >CHECKOUT NOW!</button>
+            )}
         </div>
       </div>
     </div>
   )
+}
+
+export const getServerSideProps = () => {
+  return {
+    props: {
+      payapalId: process.env.PAYPAL_ID
+    }
+  }
 }
 
 export default Cart
